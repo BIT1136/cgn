@@ -1,6 +1,6 @@
 # CGN
 
-[Contact-GraspNet](https://github.com/NVlabs/contact_graspnet)的ROS包装，代码修改自[这里](https://github.com/jucamohedano/ros_contact_graspnet)。使用black格式化代码。
+代码修改自[这里](https://github.com/jucamohedano/ros_contact_graspnet)，原论文为[Contact-GraspNet](https://github.com/NVlabs/contact_graspnet)。使用black格式化代码。
 
 ## 安装环境
 
@@ -19,4 +19,3 @@
     roslaunch cgn node.launch
 
 提供服务/cgn_server/generate_grasps，将预测出的抓取MarkerArray发布到cgn_marker。
-
