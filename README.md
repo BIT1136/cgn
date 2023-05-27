@@ -4,7 +4,7 @@
 
 ## 安装环境
 
-    conda create -n cgn python=3.7 numpy=1.19 opencv=4.4 tensorflow=2.2 tensorboard=2.2 trimesh=3.8 h5py=2.10 mayavi=4.7 matplotlib=3.3 tqdm=4.51 pyyaml=5.3 pyrender importlib_resources
+    conda create -c conda-forge -n cgn python=3.7 numpy=1.19 opencv=4.4 tensorflow=2.2 tensorboard=2.2 trimesh=3.8 h5py=2.10 mayavi=4.7 matplotlib=3.3 tqdm=4.51 pyyaml=5.3 pyrender importlib_resources
 
 重新编译pointnet2 tf_ops：
 
