@@ -12,12 +12,16 @@ draw_grasp_id = 0
 draw_cam_id = 0
 
 
-def draw_grasp(pub, pose, frame):
+def draw_grasp(pub, pose, frame,q):
     global draw_grasp_id
+    cm = lambda s: tuple([float(1 - s), float(s), float(0), float(1)])
+    vmin = 0
+    vmax = 0.6
+    color = cm((q - vmin) / (vmax - vmin))
     markers = create_grasp_markers(
-        frame, pose, [0.5, 1, 0.5, 1], "grasp", draw_grasp_id
+        frame, pose, color, "grasp", draw_grasp_id
     )
-    draw_grasp_id += 4
+    draw_grasp_id += 5
     pub.publish(MarkerArray(markers=markers))
 
 
@@ -58,7 +62,16 @@ def create_grasp_markers(frame, pose: Pose, color, ns, id=0):
     scale = [radius, radius, w]
     palm = create_marker(Marker.CYLINDER, frame, palm_pose, scale, color, ns, id + 3)
 
-    return [left, right, wrist, palm]
+    up_point = np.dot(pose_mat, np.array([0.0, d/8, -d, 1]))
+    up_pose = pose_mat.copy()
+    up_pose[:3, 3] = up_point[:3]
+    rot = np.eye(4)
+    rot[:3, :3] = Rotation.from_rotvec([-np.pi / 2,0, 0]).as_matrix()
+    up_pose = np.dot(up_pose, rot)
+    scale = [radius, radius, d/4]
+    up = create_marker(Marker.CYLINDER, frame, up_pose, scale, color, ns, id + 4)
+
+    return [left, right, wrist, palm,up]
 
 
 def create_marker(type, frame, pose, scale=[1, 1, 1], color=(1, 1, 1, 1), ns="", id=0):

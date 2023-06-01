@@ -68,7 +68,7 @@ parser.add_argument(
 parser.add_argument(
     "--forward_passes",
     type=int,
-    default=1,
+    default=5,
     help="Run multiple parallel forward passes to mesh_utils more potential contact points.",
 )
 parser.add_argument(
@@ -96,10 +96,20 @@ grasp_estimator.build_network()
 # Add ops to save and restore all the variables.
 saver = tf.train.Saver(save_relative_paths=True)
 
-marker_pub = rospy.Publisher("cgn_marker", MarkerArray, queue_size=1)
+marker_pub = rospy.Publisher("marker", MarkerArray, queue_size=1)
 
 print("加载权重")
 grasp_estimator.load_weights(sess, saver, checkpoint_dir, mode="test")
+
+# 第一次预测会很慢
+a,b,c,d=grasp_estimator.predict_scene_grasps(
+        sess,
+        pc_full=np.random.rand(1000, 3),
+        pc_segments={0:np.random.rand(100, 3)},
+        local_regions=True,
+        filter_grasps=True,
+        forward_passes=FLAGS.forward_passes,
+    )
 
 
 # callback function in generating grasps service
@@ -135,7 +145,6 @@ def generate_grasps(req):
         objs_np[i] = obj_np
 
     response = GenerateGraspsResponse()
-    pose_array_full = None
 
     print("预测抓取...")
     t_start = time.perf_counter()
@@ -145,49 +154,39 @@ def generate_grasps(req):
         pc_segments=objs_np,
         local_regions=True,
         filter_grasps=True,
-        forward_passes=1,
+        forward_passes=FLAGS.forward_passes,
     )
 
     # loop through each object's pcl and adjust predicted grasps
     for i in range(len(req.objects_pcl)):
-        pc_seg_map = req.objects_pcl[i]
-        pc_seg_map = ros_numpy.numpify(pc_seg_map)
-        max_z, min_z = np.max(pc_seg_map["z"]), np.min(pc_seg_map["z"])
 
-        object_height = max_z - min_z
-        response.object_heights.append(object_height)
-
-        if i in pred_grasps_cam:
+        if i in pred_grasps_cam.keys() and len(pred_grasps_cam[i])>0:
             pose_array = pred_grasps_cam[i]
 
-            # 取前10个抓取位姿
+            # 取前5个抓取位姿
             this_scores = scores[i]
-            idx = np.argsort(this_scores)[::-1][-10:]
+            idx = np.argsort(this_scores)[::-1][-5:]
             pose_array = pose_array[idx]
             this_scores = this_scores[idx]
+            print(f"最高分：{this_scores[0]:.3f}")
 
             pose_array = forward_poses(pose_array, 0.1)
             pose_array = to_pose_array_msg(pose_array, frame_id)
-            clear_markers(marker_pub)
 
             # 绘制抓取位姿
-            for pose in pose_array.poses:
-                draw_grasp(marker_pub, pose, frame_id)
-                # time.sleep(0.1)
+            clear_markers(marker_pub)
+            for pose,q in zip(pose_array.poses,this_scores):
+                draw_grasp(marker_pub, pose, frame_id,q)
+                time.sleep(0.1)
+
             response.all_grasp_poses.append(pose_array)
-            ps = to_point_stamped(contacts[i], frame_id)
-            for p in ps:
-                response.grasp_contact_points.append(p)
+            
             response.all_scores = response.all_scores + this_scores.tolist()
             if np.isnan(np.nanmean(scores[i])):
                 print(scores[i])
                 print(np.nanmean(scores[i]))
                 print("nan scores: {}, object: {}".format(scores[i], i))
 
-            if pose_array_full is None:
-                pose_array_full = deepcopy(pose_array)
-            else:
-                pose_array_full.poses += pose_array.poses
         else:  # empty grasps
             response.all_grasp_poses.append(PoseArray())
             response.all_scores.append(0.0)
@@ -239,7 +238,7 @@ if __name__ == "__main__":
         s = rospy.Service(
             f"{rospy.get_name()}/generate_grasps", GenerateGrasps, generate_grasps
         )
-        print("cgn服务就绪")
+        print("cgn_server就绪")
     except KeyboardInterrupt:
         sys.exit()
     rospy.spin()

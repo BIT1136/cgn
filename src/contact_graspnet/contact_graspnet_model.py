@@ -18,8 +18,6 @@ from pointnet2.tf_ops.grouping.tf_grouping import (
     knn_point,
 )
 
-import mesh_utils
-
 
 def placeholder_inputs(batch_size, num_input_points=20000, input_normals=False):
     """

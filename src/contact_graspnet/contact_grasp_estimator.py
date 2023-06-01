@@ -390,7 +390,7 @@ class GraspEstimator:
                 ) = self.predict_grasps(
                     sess,
                     pc_region,
-                    convert_cam_coords=True,
+                    convert_cam_coords=False,
                     forward_passes=forward_passes,
                 )
         else:
@@ -403,7 +403,7 @@ class GraspEstimator:
                 contact_pts[-1],
                 gripper_openings[-1],
             ) = self.predict_grasps(
-                sess, pc_full, convert_cam_coords=True, forward_passes=forward_passes
+                sess, pc_full, convert_cam_coords=False, forward_passes=forward_passes
             )
             print("Generated {} grasps".format(len(pred_grasps_cam[-1])))
 
