@@ -1,13 +1,13 @@
 # CGN
 
-代码修改自[这里](https://github.com/jucamohedano/ros_contact_graspnet)，原论文为[Contact-GraspNet](https://github.com/NVlabs/contact_graspnet)。使用black格式化代码。
+代码修改自[6 DoF grasp synthesis project](https://github.com/jucamohedano/ros_contact_graspnet)，原模型仓库为[Contact-GraspNet](https://github.com/NVlabs/contact_graspnet)。
 
 ## 安装环境
 
     conda create -c conda-forge -n cgn python=3.7 scipy pyyaml importlib_resources rospkg
     pip install tensorflow==2.5
 
-重新编译pointnet2 tf_ops：
+重新编译pointnet2算子：
 
     sh compile_pointnet_tfops.sh
 
@@ -20,3 +20,7 @@
     roslaunch cgn node.launch
 
 提供服务/cgn_server/generate_grasps，将预测出的抓取MarkerArray发布到cgn_marker。
+
+## 参考
+
+[Deep Grasping ROS](https://github.com/gist-ailab/deep-grasping)也包装了Contact-GraspNet。
